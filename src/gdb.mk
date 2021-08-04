@@ -2,8 +2,8 @@
 
 PKG             := gdb
 $(PKG)_WEBSITE  := https://www.gnu.org/software/gdb/
-$(PKG)_VERSION  := 8.3.1
-$(PKG)_CHECKSUM := 1e55b4d7cdca7b34be12f4ceae651623aa73b2fd640152313f9f66a7149757c4
+$(PKG)_VERSION  := 10.2
+$(PKG)_CHECKSUM := aaa1223d534c9b700a8bec952d9748ee1977513f178727e1bee520ee000b4f29
 $(PKG)_SUBDIR   := gdb-$($(PKG)_VERSION)
 $(PKG)_FILE     := gdb-$($(PKG)_VERSION).tar.xz
 $(PKG)_URL      := https://ftp.gnu.org/gnu/$(PKG)/$($(PKG)_FILE)
@@ -20,14 +20,17 @@ endef
 define $(PKG)_BUILD
     cd '$(BUILD_DIR)' && '$(SOURCE_DIR)/configure' \
         $(MXE_CONFIGURE_OPTS) \
+        --enable-static \
+        --disable-shared \
         --with-system-readline \
         --disable-gdbtk \
         --disable-tui \
         host_configargs="LIBS=\"`$(TARGET)-pkg-config --libs dlfcn` -lmman\"" \
-        CONFIG_SHELL=$(SHELL)
-    $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)'
+        CONFIG_SHELL=$(SHELL) \
+        LDFLAGS='-Wl,--allow-multiple-definition'
+    $(MAKE) -C '$(BUILD_DIR)' -j '$(JOBS)' MAKEINFO='/usr/bin/env true'
 
     # executables are always static and we don't want the rest
      $(INSTALL) -m755 '$(BUILD_DIR)/gdb/gdb.exe'                 '$(PREFIX)/$(TARGET)/bin/'
-     $(INSTALL) -m755 '$(BUILD_DIR)/gdb/gdbserver/gdbserver.exe' '$(PREFIX)/$(TARGET)/bin/'
+     $(INSTALL) -m755 '$(BUILD_DIR)/gdbserver/gdbserver.exe' '$(PREFIX)/$(TARGET)/bin/'
 endef
